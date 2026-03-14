@@ -1,0 +1,105 @@
+name: Apartment Pipeline
+
+on:
+  schedule:
+    # Weekdays (Mon-Fri): 9, 14, 19 CET (= UTC+1)
+    - cron: "0 8,13,18 * * 1-5"
+    # Weekends (Sat-Sun): 11, 19 CET (= UTC+1)
+    - cron: "0 10,18 * * 0,6"
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Source to scrape (idealista, immobiliare, or both)"
+        required: false
+        default: ""
+        type: choice
+        options:
+          - ""
+          - idealista
+          - immobiliare
+      max_items:
+        description: "Max items per actor run"
+        required: false
+        default: "50"
+        type: string
+
+env:
+  APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+jobs:
+  idealista:
+    name: Idealista pipeline
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.source != 'immobiliare')
+    timeout-minutes: 15
+    env:
+      SOURCE: idealista
+      MAX_ITEMS: ${{ github.event.inputs.max_items || '50' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        working-directory: pipeline
+        run: uv sync
+
+      - name: Run pipeline (idealista)
+        working-directory: pipeline
+        run: uv run python -m src.main all --source="$SOURCE" --max-items="$MAX_ITEMS"
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: idealista-logs-${{ github.run_id }}
+          path: pipeline/logs/
+          retention-days: 7
+
+  immobiliare:
+    name: Immobiliare pipeline
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.source != 'idealista')
+    timeout-minutes: 15
+    env:
+      SOURCE: immobiliare
+      MAX_ITEMS: ${{ github.event.inputs.max_items || '50' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        working-directory: pipeline
+        run: uv sync
+
+      - name: Run pipeline (immobiliare)
+        working-directory: pipeline
+        run: uv run python -m src.main all --source="$SOURCE" --max-items="$MAX_ITEMS"
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: immobiliare-logs-${{ github.run_id }}
+          path: pipeline/logs/
+          retention-days: 7

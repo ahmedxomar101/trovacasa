@@ -1,0 +1,62 @@
+{
+  "city": "rome",
+  "tiers": {
+    "top": {
+      "score": 100,
+      "factor": 1.0,
+      "zones": [
+        "trastevere",
+        "prati",
+        "monti",
+        "testaccio",
+        "centro storico",
+        "flaminio",
+        "parioli"
+      ]
+    },
+    "good": {
+      "score": 85,
+      "factor": 0.9,
+      "zones": [
+        "san giovanni",
+        "esquilino",
+        "ostiense",
+        "eur",
+        "monteverde",
+        "nomentano",
+        "trieste",
+        "salario",
+        "appio latino",
+        "aventino"
+      ]
+    },
+    "average": {
+      "score": 60,
+      "factor": 0.75,
+      "zones": [
+        "tuscolano",
+        "tiburtino",
+        "prenestino",
+        "portuense",
+        "laurentino",
+        "marconi",
+        "garbatella",
+        "magliana",
+        "cinecitt\u00e0"
+      ]
+    },
+    "caution": {
+      "score": 35,
+      "factor": 0.5,
+      "zones": [
+        "tor bella monaca",
+        "san basilio",
+        "corviale",
+        "primavalle",
+        "tor sapienza",
+        "lunghezza"
+      ]
+    }
+  },
+  "default_tier": "average"
+}

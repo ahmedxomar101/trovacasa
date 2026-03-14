@@ -1,0 +1,81 @@
+{
+  "city": "milan",
+  "tiers": {
+    "top": {
+      "score": 100,
+      "factor": 1.0,
+      "zones": [
+        "citta studi",
+        "isola",
+        "porta venezia",
+        "navigli",
+        "brera",
+        "garibaldi",
+        "citylife",
+        "porta nuova",
+        "arco della pace",
+        "sempione",
+        "indipendenza"
+      ]
+    },
+    "good": {
+      "score": 85,
+      "factor": 0.9,
+      "zones": [
+        "bicocca",
+        "bovisa",
+        "porta romana",
+        "lambrate",
+        "nolo",
+        "maggiolina",
+        "dergano",
+        "cenisio",
+        "sarpi",
+        "chinatown",
+        "loreto",
+        "maciachini",
+        "precotto",
+        "turro",
+        "washington",
+        "fiera"
+      ]
+    },
+    "average": {
+      "score": 60,
+      "factor": 0.75,
+      "zones": [
+        "corvetto",
+        "niguarda",
+        "affori",
+        "baggio",
+        "barona",
+        "gratosoglio",
+        "gallaratese",
+        "quinto romano",
+        "famagosta",
+        "chiesa rossa",
+        "stadera",
+        "vigentino",
+        "ripamonti",
+        "gorla",
+        "adriano",
+        "crescenzago"
+      ]
+    },
+    "caution": {
+      "score": 35,
+      "factor": 0.5,
+      "zones": [
+        "quarto oggiaro",
+        "rogoredo",
+        "san siro",
+        "comasina",
+        "ponte lambro",
+        "molise",
+        "calvairate",
+        "via padova"
+      ]
+    }
+  },
+  "default_tier": "average"
+}

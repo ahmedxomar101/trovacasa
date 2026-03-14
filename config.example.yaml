@@ -1,0 +1,104 @@
+# TrovaCasa Configuration
+# =======================
+# Copy this file to config.yaml and customize it for your search.
+#
+# Three ways to set up:
+#   1. Edit this file manually
+#   2. Use ai-setup/config-builder.md with Claude Code / Cursor
+#   3. Run: uv run python -m src.main validate (to check your config)
+
+# --- City ---
+# Which city to search in. Must match a directory in pipeline/data/cities/
+# Shipped cities: milan, rome
+city: milan
+
+# --- Budget ---
+budget:
+  max_rent: 1100              # Maximum monthly rent in your currency
+  currency: EUR
+
+# --- Apartment ---
+apartment:
+  min_size_sqm: 40            # Minimum apartment size in square meters
+  rooms: [2, 3]               # Accepted room counts (pipeline-level filter)
+  bedrooms: [1, 2, 3]         # Bedroom filter (passed to scraper query params)
+
+# --- Commute ---
+# Where you commute to daily. Used by the commute scorer.
+commute:
+  destination:
+    lat: 45.4565              # Latitude of your workplace/school
+    lon: 9.1525               # Longitude of your workplace/school
+    name: "Tre Torri"         # Display name
+  preferred_line: M5          # Optional — metro scorer boosts stations on this line
+
+# --- Scrapers ---
+# Each scraper has its own config block. Set enabled: false to skip.
+# You can add custom scrapers — see docs for the BaseScraper protocol.
+scrapers:
+  idealista:
+    enabled: true
+    actor_id: "dz_omar/idealista-scraper"
+    location_id: "0-EU-IT-MI-01-001-135"    # Idealista location ID for your city
+    max_items: 400
+    timeout_secs: 1900
+  immobiliare:
+    enabled: true
+    actor_id: "memo23/immobiliare-scraper"
+    max_items: 400
+    timeout_secs: 1200
+    # Map center points for geographic coverage.
+    # Each zone gives the scraper a different view of the city.
+    zones:
+      - { lat: "45.510", lon: "9.190", zoom: 14, name: "North" }
+      - { lat: "45.485", lon: "9.190", zoom: 14, name: "Central-North" }
+      - { lat: "45.460", lon: "9.190", zoom: 14, name: "Central" }
+      - { lat: "45.470", lon: "9.145", zoom: 14, name: "West" }
+      - { lat: "45.470", lon: "9.230", zoom: 14, name: "East" }
+      - { lat: "45.435", lon: "9.190", zoom: 14, name: "South" }
+
+# --- Scoring ---
+# Weights control how much each dimension matters in the hybrid score.
+# Must sum to 1.0. Set a weight to 0 to disable that scorer.
+scoring:
+  weights:
+    commute: 0.30             # Transit commute time to workplace
+    metro: 0.20               # Proximity to metro (preferred_line boost)
+    livability: 0.15          # Apartment comfort (elevator, floor, energy, etc.)
+    freshness: 0.15           # How recently the listing was posted
+    scam: 0.10                # Scam risk detection
+    quality: 0.10             # Listing quality (photos, description, media)
+
+  # Optional: override internal scoring thresholds per scorer.
+  # Uncomment and adjust any values you want to customize.
+  # livability:
+  #   elevator: { "yes": 80, "no_high_floor": 30, "no_low_floor": 70 }
+  #   furnished: { "full": 90, "partial": 70, "no": 50, "unknown": 60 }
+  #   energy_class: { "A": 100, "B": 100, "C": 70, "D": 70, "E": 40, "F": 40, "G": 20, "unknown": 50 }
+  #   condition: { "renovated": 100, "new": 100, "good": 70, "needs_work": 30, "unknown": 50 }
+  #   heating: { "autonomous": 80, "centralized": 50, "unknown": 60 }
+  #   balcony: { "yes": 80, "no": 40, "unknown": 60 }
+  #   floor: { "basement": 20, "ground": 40, "mezzanine": 40, "low": 50, "mid": 70, "high": 80 }
+
+# --- Gallery ---
+gallery:
+  min_score: 70               # Only fetch full galleries for listings scoring >= this
+  batch_size: 20              # Max listings per gallery fetch batch
+
+# --- Notifications ---
+# Telegram alerts for new high-scoring listings.
+# Requires TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in .env
+telegram:
+  enabled: false
+  score_thresholds:
+    fresh_6h: 65              # Min score for listings < 6 hours old
+    day_old: 70               # Min score for listings 6-24 hours old
+    two_day: 80               # Min score for listings 24-48 hours old
+
+# --- LLM ---
+# OpenAI model for structured extraction from listing descriptions.
+# Requires OPENAI_API_KEY in .env
+llm:
+  model: "gpt-5-mini"
+  max_workers: 15             # Parallel extraction calls
+  max_retries: 4              # Retry attempts for failed calls

@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Environment
+.env
+.env.local
+
+# User config (generated from config.example.yaml)
+config.yaml
+
+# Data & outputs (large/generated files)
+**/listings.db
+**/output/
+
+# Logs — keep pipeline logs, ignore large LLM dump
+**/llm_extract.log
+
+# Node
+node_modules/
+.next/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Playwright
+.playwright-mcp/
+.playwright-cli/
+
+# uv
+.python-version
+
+# Legacy/debug files at root (not part of the app)
+/debug_*.py
+/test_*.py
+/main.py
+/metro_stations.json
+.vercel

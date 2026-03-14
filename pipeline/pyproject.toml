@@ -1,0 +1,21 @@
+[project]
+name = "trovacasa"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "apify-client>=2.5.0",
+    "asyncpg>=0.30.0",
+    "httpx>=0.28.0",
+    "openai>=1.0.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.2.2",
+    "pyyaml>=6.0.3",
+    "rich>=14.3.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

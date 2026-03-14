@@ -2,6 +2,15 @@
 
 AI-powered apartment finder for Italian cities. Scrapes rental listings from [idealista.it](https://idealista.it) and [immobiliare.it](https://immobiliare.it), enriches them with LLM extraction, scores them across configurable dimensions, and delivers results via Telegram notifications and a web dashboard.
 
+## Who is this for?
+
+- **Expats relocating to Italy** — Moving to Milan or Rome for work and need to find an apartment remotely before you arrive
+- **International students** — Starting university in an Italian city and overwhelmed by Italian-language listings
+- **Digital nomads** — Settling in Italy for a few months and want to quickly find the best-value apartment near transit
+- **Anyone apartment hunting in Italy** — Tired of manually checking idealista and immobiliare every day, comparing listings in spreadsheets, and missing good deals
+
+TrovaCasa automates the entire workflow: scraping, filtering, scoring, and alerting — so you see only the listings that match your priorities, ranked by what matters to you.
+
 ## Features
 
 - **Multi-platform scraping** — Pulls listings from idealista and immobiliare via [Apify](https://apify.com) (your IP is never exposed)

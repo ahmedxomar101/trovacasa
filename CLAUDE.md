@@ -5,11 +5,19 @@ AI-powered apartment finder for Italian cities. Scrapes rental listings from ide
 ## IMPORTANT: Maintain This File
 This CLAUDE.md is the project's living documentation. **Always update it** when you discover new learnings, fix bugs, change architecture, add/remove actors, update configs, or make any significant decision.
 
+## Open Source
+
+This is a **public open-source project** (MIT license). All code, commits, and PRs are visible to anyone. Keep this in mind:
+- **Never commit secrets** (API keys, DB credentials, personal data) — use `.env` files (gitignored)
+- **Write clean commit messages** — they're public-facing
+- **No personal references** — use config-driven values, not hardcoded names/locations
+- **PR descriptions matter** — external contributors may read them
+
 ## Git Workflow
 
 ### Repository
-- **Remote:** https://github.com/YOUR_USERNAME/trovacasa
-- **Default branch:** `master`
+- **Remote:** https://github.com/ahmedxomar101/trovacasa
+- **Default branch:** `main`
 
 ### Branch Strategy
 - **Never commit directly to master** — always use feature branches

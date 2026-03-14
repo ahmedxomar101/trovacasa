@@ -27,7 +27,7 @@ AI-powered apartment finder for Italian cities. Scrapes rental listings from [id
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/trovacasa.git
+git clone https://github.com/ahmedxomar101/trovacasa.git
 cd trovacasa/pipeline
 uv sync
 ```

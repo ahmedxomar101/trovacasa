@@ -55,6 +55,11 @@ jobs:
         working-directory: pipeline
         run: uv sync
 
+      - name: Write config.yaml from secret
+        env:
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+        run: echo "$CONFIG_YAML" > config.yaml
+
       - name: Run pipeline (idealista)
         working-directory: pipeline
         run: uv run python -m src.main all --source="$SOURCE" --max-items="$MAX_ITEMS"
@@ -91,6 +96,11 @@ jobs:
       - name: Install dependencies
         working-directory: pipeline
         run: uv sync
+
+      - name: Write config.yaml from secret
+        env:
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+        run: echo "$CONFIG_YAML" > config.yaml
 
       - name: Run pipeline (immobiliare)
         working-directory: pipeline

@@ -5,20 +5,18 @@ including HD images, floor plans, videos, and rich structured details.
 Used selectively for high-score listings to keep costs low.
 """
 
-import json
 import os
 import time
 
 from apify_client import ApifyClient
 from rich.console import Console
 
-from ..config import (
-    IDEALISTA_API_ACTOR_ID,
-    APIFY_POLL_INTERVAL,
-    APIFY_TIMEOUT_IDEALISTA_API,
-)
-
 console = Console()
+
+# Gallery-specific actor (different from the search scraper)
+GALLERY_ACTOR_ID = "dz_omar/idealista-scraper-api"
+POLL_INTERVAL = 15
+DEFAULT_TIMEOUT_SECS = 300
 
 TERMINAL_STATUSES = {"SUCCEEDED", "FAILED", "ABORTED", "TIMED-OUT"}
 
@@ -26,12 +24,14 @@ TERMINAL_STATUSES = {"SUCCEEDED", "FAILED", "ABORTED", "TIMED-OUT"}
 def fetch_idealista_galleries(
     urls: list[str],
     api_token: str | None = None,
+    timeout_secs: int = DEFAULT_TIMEOUT_SECS,
 ) -> dict[str, dict]:
     """Fetch full property data for a list of idealista URLs.
 
     Args:
         urls: List of idealista property URLs.
         api_token: Apify API token (defaults to env var).
+        timeout_secs: Max seconds to wait for the actor run.
 
     Returns:
         Dict mapping original URL to the full API actor response.
@@ -55,9 +55,9 @@ def fetch_idealista_galleries(
     )
 
     try:
-        run = client.actor(IDEALISTA_API_ACTOR_ID).start(
+        run = client.actor(GALLERY_ACTOR_ID).start(
             run_input=run_input,
-            timeout_secs=APIFY_TIMEOUT_IDEALISTA_API,
+            timeout_secs=timeout_secs,
         )
         run_id = run["id"]
         console.print(f"[dim]Actor run started: {run_id}[/dim]")
@@ -74,11 +74,11 @@ def fetch_idealista_galleries(
                 )
                 break
 
-            if elapsed > APIFY_TIMEOUT_IDEALISTA_API:
+            if elapsed > timeout_secs:
                 console.print("[red]Gallery fetch timed out[/red]")
                 return {}
 
-            time.sleep(APIFY_POLL_INTERVAL)
+            time.sleep(POLL_INTERVAL)
 
         if status != "SUCCEEDED":
             console.print(f"[red]Gallery fetch failed: {status}[/red]")

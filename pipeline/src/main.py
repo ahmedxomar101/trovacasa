@@ -334,10 +334,13 @@ async def run_enrich(pool, force: bool = False) -> None:
 
 # ── Stage 3: Score + Report ──────────────────────────────────────────────────
 
-async def run_score(pool, force: bool = True) -> None:
+async def run_score(pool, settings=None, force: bool = True) -> None:
     """Compute all scores and generate report. Reads from DB, writes back to DB."""
     tracker = RunTracker()
     run_id = await tracker.start(pool, "score")
+
+    if settings is None:
+        settings = load_config()
 
     try:
         console.log("[dim]Score stage \u2014 no external API keys needed.[/dim]")
@@ -346,7 +349,7 @@ async def run_score(pool, force: bool = True) -> None:
         console.rule("[bold magenta]Stage 3: Scoring + Report[/bold magenta]")
         console.log(f"Started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-        await score_all_listings(pool, force=force)
+        await score_all_listings(pool, config=settings.scoring, force=force)
 
         # Generate HTML report
         await generate_report(pool)
@@ -411,7 +414,7 @@ async def run_all(pool, settings, source: str | None = None) -> None:
     """Full pipeline: scrape → enrich → score → gallery → notify."""
     await run_scrape(pool, settings, source=source)
     await run_enrich(pool)
-    await run_score(pool)
+    await run_score(pool, settings=settings)
     # Fetch galleries for high-score listings
     if os.environ.get("APIFY_API_TOKEN"):
         await run_gallery(pool)
@@ -553,7 +556,7 @@ async def _run(cmd: str, force: bool = False, source: str | None = None, skip_db
         elif cmd == "enrich":
             await run_enrich(pool, force=force)
         elif cmd == "score":
-            await run_score(pool, force=force)
+            await run_score(pool, settings=settings, force=force)
         elif cmd == "notify":
             await run_notify(pool)
         elif cmd == "gallery":

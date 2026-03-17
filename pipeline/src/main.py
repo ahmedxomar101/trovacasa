@@ -410,7 +410,7 @@ async def run_gallery(pool) -> None:
         raise
 
 
-async def run_all(pool, settings, source: str | None = None) -> None:
+async def run_all(pool, settings, source: str | None = None, skip_notify: bool = False) -> None:
     """Full pipeline: scrape → enrich → score → gallery → notify."""
     await run_scrape(pool, settings, source=source)
     await run_enrich(pool)
@@ -418,8 +418,8 @@ async def run_all(pool, settings, source: str | None = None) -> None:
     # Fetch galleries for high-score listings
     if os.environ.get("APIFY_API_TOKEN"):
         await run_gallery(pool)
-    # Notify only if Telegram is configured
-    if settings.telegram.enabled and os.environ.get("TELEGRAM_BOT_TOKEN"):
+    # Notify only if Telegram is configured (and not skipped)
+    if not skip_notify and settings.telegram.enabled and os.environ.get("TELEGRAM_BOT_TOKEN"):
         await run_notify(pool)
 
 
@@ -512,7 +512,7 @@ def export_csv(listings: list[dict], filepath: str) -> None:
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
-async def _run(cmd: str, force: bool = False, source: str | None = None, skip_db: bool = False) -> None:
+async def _run(cmd: str, force: bool = False, source: str | None = None, skip_db: bool = False, skip_notify: bool = False) -> None:
     """Load config, create pool, and run the requested stage."""
 
     # Load config
@@ -564,17 +564,18 @@ async def _run(cmd: str, force: bool = False, source: str | None = None, skip_db
         elif cmd == "bot":
             await run_bot(pool)
         elif cmd == "all":
-            await run_all(pool, settings, source=source)
+            await run_all(pool, settings, source=source, skip_notify=skip_notify)
     finally:
         await pool.close()
 
 
-def _parse_args() -> tuple[str, bool, str | None, bool]:
-    """Parse CLI arguments. Returns (cmd, force, source, skip_db)."""
+def _parse_args() -> tuple[str, bool, str | None, bool, bool]:
+    """Parse CLI arguments. Returns (cmd, force, source, skip_db, skip_notify)."""
     cmd = "all"
     force = False
     source = None
     skip_db = False
+    skip_notify = False
 
     args = sys.argv[1:]
     for arg in args:
@@ -582,21 +583,23 @@ def _parse_args() -> tuple[str, bool, str | None, bool]:
             force = True
         elif arg == "--skip-db":
             skip_db = True
+        elif arg == "--skip-notify":
+            skip_notify = True
         elif arg.startswith("--source="):
             source = arg.split("=", 1)[1]
         elif not arg.startswith("--"):
             cmd = arg
 
-    return cmd, force, source, skip_db
+    return cmd, force, source, skip_db, skip_notify
 
 
 if __name__ == "__main__":
-    cmd, force, source, skip_db = _parse_args()
+    cmd, force, source, skip_db, skip_notify = _parse_args()
 
     console.log(f"[bold]Pipeline log:[/bold] {_log_path}")
 
     try:
-        asyncio.run(_run(cmd, force=force, source=source, skip_db=skip_db))
+        asyncio.run(_run(cmd, force=force, source=source, skip_db=skip_db, skip_notify=skip_notify))
     except Exception as e:
         console.log(f"[bold red]Pipeline failed: {e}[/bold red]")
         raise

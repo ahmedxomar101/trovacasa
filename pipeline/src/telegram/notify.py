@@ -279,9 +279,11 @@ async def send_new_listings(
         if listing["hybrid_score"] >= min_score:
             qualified.append(listing)
 
-    # Sort by score DESC (best first)
+    # Sort by score DESC to pick the best, then reverse for sending
+    # (Telegram shows newest at bottom, so send lowest first, highest last)
     qualified.sort(key=lambda x: x["hybrid_score"], reverse=True)
     qualified = qualified[:max_per_run]
+    qualified.reverse()
 
     if not qualified:
         console.print("[green]No new listings to notify about.[/]")
@@ -344,7 +346,7 @@ async def send_new_listings(
     total_active = await pool.fetchval(
         "SELECT COUNT(*) FROM listings WHERE status = 'active'"
     )
-    top = qualified[0] if qualified else None  # first = highest score (DESC order)
+    top = qualified[-1] if qualified else None  # last = highest score (sent last)
     digest_lines = [
         f"<b>Pipeline notification summary</b>",
         f"Sent: {stats['sent']} alerts",

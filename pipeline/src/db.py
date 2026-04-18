@@ -121,8 +121,20 @@ async def get_listings(
     if sort_by not in allowed_sort_columns:
         sort_by = "metro_score"
 
+    _LIST_COLS = (
+        "id, source, url, title, address, price, rooms, "
+        "size_sqm, floor, image_url, lat, lon, metro_score, "
+        "nearest_station, agent, published_date, scraped_at, "
+        "bathrooms, property_type, elevator, balcony, terrace, "
+        "energy_class, num_photos, condo_fees, condo_included, "
+        "furnished, contract_type, hybrid_score, commute_score, "
+        "quality_score, scam_score, livability_score, "
+        "freshness_score, neighborhood_score, neighborhood_name, "
+        "total_monthly_cost, budget_status, commute_minutes, "
+        "phone, status, description"
+    )
     query = f"""
-        SELECT * FROM listings
+        SELECT {_LIST_COLS} FROM listings
         WHERE COALESCE(metro_score, 0) >= $1
         ORDER BY {sort_by} DESC NULLS LAST
     """

@@ -5,7 +5,7 @@ export default async function HistoryPage() {
 
   const { data: runs } = await supabase
     .from("pipeline_runs")
-    .select("*")
+    .select("id, started_at, completed_at, stage, status, stats, error_message")
     .order("started_at", { ascending: false })
     .limit(50);
 

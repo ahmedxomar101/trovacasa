@@ -115,11 +115,27 @@ async def score_all_listings(
         config: Scoring configuration.
         force: If True, re-score all listings even if scored.
     """
+    _SCORING_COLS = (
+        "id, price, rooms, size_sqm, address, floor, "
+        "description, lat, lon, metro_score, nearest_station, "
+        "condo_fees, condo_included, elevator, balcony, "
+        "terrace, furnished, energy_class, condition, "
+        "heating, heating_fuel, air_conditioning, orientation, "
+        "is_private, num_photos, has_video, has_3d_tour, "
+        "creation_date, last_modified, price_per_sqm, "
+        "red_flags, url, agent, neighborhood_name, "
+        "commute_score, quality_score, scam_score, "
+        "livability_score, freshness_score, "
+        "neighborhood_score, hybrid_score, "
+        "total_monthly_cost, budget_status, commute_minutes"
+    )
     if force:
-        rows = await pool.fetch("SELECT * FROM listings")
+        rows = await pool.fetch(
+            f"SELECT {_SCORING_COLS} FROM listings"
+        )
     else:
         rows = await pool.fetch(
-            "SELECT * FROM listings "
+            f"SELECT {_SCORING_COLS} FROM listings "
             "WHERE hybrid_score IS NULL"
         )
 

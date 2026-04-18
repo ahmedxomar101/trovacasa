@@ -97,12 +97,12 @@ export default async function DashboardPage() {
   // Stats
   const { count: totalActive } = await supabase
     .from("listings")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("status", "active");
 
   const { count: totalFavorited } = await supabase
     .from("listings")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .in("status", ["favorited", "contacted", "no_reply", "booked", "visited", "waiting"]);
 
   // Compute stats from listings
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
   // Recent pipeline runs
   const { data: recentRuns } = await supabase
     .from("pipeline_runs")
-    .select("*")
+    .select("id, started_at, completed_at, stage, status, stats")
     .order("started_at", { ascending: false })
     .limit(5);
 

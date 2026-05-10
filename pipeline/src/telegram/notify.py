@@ -293,58 +293,58 @@ async def send_new_listings(
         console.print("[green]No new listings to notify about.[/]")
         return stats
 
-    # Log tier breakdown
-    tier_counts = {"<6h": 0, "6-24h": 0, "24-48h": 0}
+    # Group by city \u2014 send each city as a separate batch
+    from itertools import groupby
+    qualified_by_city: dict[str, list[dict]] = {}
     for listing in qualified:
-        creation = listing.get("creation_date") or listing.get("published_date")
-        try:
-            created = datetime.fromisoformat(str(creation).replace("Z", "+00:00"))
-            hours = (now - created).total_seconds() / 3600
-            if hours < 6:
-                tier_counts["<6h"] += 1
-            elif hours < 24:
-                tier_counts["6-24h"] += 1
-            else:
-                tier_counts["24-48h"] += 1
-        except (ValueError, TypeError):
-            pass
-    console.print(
-        f"[dim]Notification tiers: {tier_counts['<6h']} new (<6h), "
-        f"{tier_counts['6-24h']} today (6-24h), {tier_counts['24-48h']} yesterday (24-48h)[/]"
-    )
+        city = listing.get("city") or "unknown"
+        qualified_by_city.setdefault(city, []).append(listing)
 
     console.print(f"[bold]Sending {len(qualified)} listings to {len(subscribers)} subscriber(s)...[/]")
+    console.print(f"[dim]Cities: {', '.join(f'{k} ({len(v)})' for k, v in qualified_by_city.items())}[/]")
 
     async with httpx.AsyncClient(timeout=30) as client:
-        for listing in qualified:
-            listing_id = listing["id"]
-            caption = _format_caption(listing)
-            keyboard = _build_keyboard(listing_id, listing.get("url", ""))
-            image_url = listing.get("image_url")
-
-            # Send to all subscribers
-            all_ok = True
+        for city_name, city_listings in qualified_by_city.items():
+            # Send city header
+            header = f"\U0001f4cd <b>{city_name.capitalize()}</b> \u2014 {len(city_listings)} new listing{'s' if len(city_listings) != 1 else ''}"
             for sub in subscribers:
-                ok = await _send_to_chat(client, token, sub["chat_id"], caption, keyboard, image_url)
-                if not ok:
-                    all_ok = False
-                    console.print(f"  [red]\u2717[/] Failed for chat_id={sub['chat_id']} ({sub['first_name']})")
-                # Rate limit between subscribers
+                await client.post(
+                    _API.format(token=token, method="sendMessage"),
+                    json={
+                        "chat_id": sub["chat_id"],
+                        "text": header,
+                        "parse_mode": "HTML",
+                    },
+                )
                 await asyncio.sleep(0.3)
 
-            if all_ok:
-                await pool.execute(
-                    "UPDATE listings SET notified_at = NOW() WHERE id = $1",
-                    listing_id,
-                )
-                stats["sent"] += 1
-                price_tag = f"\u20ac{listing.get('price', '?')}/mo"
-                console.print(f"  [green]\u2713[/] {price_tag} {(listing.get('address') or '')[:35]}")
-            else:
-                stats["errors"] += 1
+            # Send listings for this city
+            for listing in city_listings:
+                listing_id = listing["id"]
+                caption = _format_caption(listing)
+                keyboard = _build_keyboard(listing_id, listing.get("url", ""))
+                image_url = listing.get("image_url")
 
-            # Rate limit between listings
-            await asyncio.sleep(1)
+                all_ok = True
+                for sub in subscribers:
+                    ok = await _send_to_chat(client, token, sub["chat_id"], caption, keyboard, image_url)
+                    if not ok:
+                        all_ok = False
+                        console.print(f"  [red]\u2717[/] Failed for chat_id={sub['chat_id']} ({sub['first_name']})")
+                    await asyncio.sleep(0.3)
+
+                if all_ok:
+                    await pool.execute(
+                        "UPDATE listings SET notified_at = NOW() WHERE id = $1",
+                        listing_id,
+                    )
+                    stats["sent"] += 1
+                    price_tag = f"\u20ac{listing.get('price', '?')}/mo"
+                    console.print(f"  [green]\u2713[/] {price_tag} {(listing.get('address') or '')[:35]}")
+                else:
+                    stats["errors"] += 1
+
+                await asyncio.sleep(1)
 
     # Send digest summary to all subscribers
     total_active = await pool.fetchval(

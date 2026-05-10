@@ -25,12 +25,18 @@ apartment:
 
 # --- Commute ---
 # Where you commute to daily. Used by the commute scorer.
+#
+# For intercity commute (e.g. Lecco/Varese → Milan):
+#   Set fixed_transit_minutes to the train+metro ride time.
+#   The scorer then ranks apartments by walk-to-station distance only,
+#   since the ride portion is the same for everyone in the city.
 commute:
   destination:
     lat: 45.4565              # Latitude of your workplace/school
     lon: 9.1525               # Longitude of your workplace/school
     name: "Tre Torri"         # Display name
   preferred_line: M5          # Optional — metro scorer boosts stations on this line
+  # fixed_transit_minutes: 55  # Uncomment for intercity (train + metro ride time)
 
 # --- Scrapers ---
 # Each scraper has its own config block. Set enabled: false to skip.

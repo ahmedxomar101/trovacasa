@@ -16,6 +16,7 @@ class RawListing(BaseModel):
 
     source: str
     url: str
+    city: str | None = None
     title: str | None = None
     address: str | None = None
     price: int | None = None

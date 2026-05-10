@@ -26,7 +26,7 @@ async def listing_exists(pool: asyncpg.Pool, url: str) -> bool:
 
 # Columns in INSERT order (excluding id and seen_count which are handled specially)
 _INSERT_COLUMNS = [
-    "source", "url", "title", "address", "price", "rooms", "size_sqm",
+    "source", "url", "city", "title", "address", "price", "rooms", "size_sqm",
     "floor", "description", "image_url", "lat", "lon", "metro_score",
     "nearest_station", "agent", "published_date", "scraped_at",
     "bathrooms", "property_type", "elevator", "balcony", "terrace",
@@ -122,7 +122,7 @@ async def get_listings(
         sort_by = "metro_score"
 
     _LIST_COLS = (
-        "id, source, url, title, address, price, rooms, "
+        "id, source, url, city, title, address, price, rooms, "
         "size_sqm, floor, image_url, lat, lon, metro_score, "
         "nearest_station, agent, published_date, scraped_at, "
         "bathrooms, property_type, elevator, balcony, terrace, "

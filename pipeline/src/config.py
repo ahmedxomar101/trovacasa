@@ -26,6 +26,7 @@ class Coordinates(BaseModel):
 class CommuteConfig(BaseModel):
     destination: Coordinates
     preferred_line: str | None = None
+    fixed_transit_minutes: int | None = None
 
 
 class BudgetConfig(BaseModel):

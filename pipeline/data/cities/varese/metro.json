@@ -1,0 +1,48 @@
+{
+  "city": "varese",
+  "type": "train",
+  "lines": [
+    {
+      "id": "varese-milano",
+      "name": "Varese-Milano (Trenord S5/S9)",
+      "branches": [
+        {
+          "id": "varese-milano-main",
+          "stations": [
+            "Varese",
+            "Varese Casbeno",
+            "Giubiano"
+          ]
+        }
+      ]
+    }
+  ],
+  "stations": [
+    {
+      "name": "Varese",
+      "lat": 45.8183,
+      "lon": 8.8316,
+      "lines": ["varese-milano"],
+      "is_interchange": false
+    },
+    {
+      "name": "Varese Casbeno",
+      "lat": 45.8110,
+      "lon": 8.8220,
+      "lines": ["varese-milano"],
+      "is_interchange": false
+    },
+    {
+      "name": "Giubiano",
+      "lat": 45.8070,
+      "lon": 8.8120,
+      "lines": ["varese-milano"],
+      "is_interchange": false
+    }
+  ],
+  "travel_time": {
+    "minutes_per_stop": 5,
+    "transfer_minutes": 0,
+    "walking_speed_m_per_min": 80
+  }
+}

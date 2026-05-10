@@ -1,0 +1,56 @@
+{
+  "city": "lecco",
+  "type": "train",
+  "lines": [
+    {
+      "id": "lecco-milano",
+      "name": "Lecco-Milano (Trenord)",
+      "branches": [
+        {
+          "id": "lecco-milano-main",
+          "stations": [
+            "Lecco",
+            "Valmadrera",
+            "Malgrate",
+            "Calolziocorte-Olginate"
+          ]
+        }
+      ]
+    }
+  ],
+  "stations": [
+    {
+      "name": "Lecco",
+      "lat": 45.8582,
+      "lon": 9.3926,
+      "lines": ["lecco-milano"],
+      "is_interchange": false
+    },
+    {
+      "name": "Valmadrera",
+      "lat": 45.8440,
+      "lon": 9.3610,
+      "lines": ["lecco-milano"],
+      "is_interchange": false
+    },
+    {
+      "name": "Malgrate",
+      "lat": 45.8510,
+      "lon": 9.3760,
+      "lines": ["lecco-milano"],
+      "is_interchange": false
+    },
+    {
+      "name": "Calolziocorte-Olginate",
+      "lat": 45.8010,
+      "lon": 9.4280,
+      "lines": ["lecco-milano"],
+      "is_interchange": false
+    }
+  ],
+  "travel_time": {
+    "minutes_per_stop": 5,
+    "transfer_minutes": 0,
+    "walking_speed_m_per_min": 80
+  }
+}

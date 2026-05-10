@@ -134,6 +134,7 @@ async def store_listings(pool, listings: list[dict], city: str = "milan") -> dic
 
     for i, listing in enumerate(listings, 1):
         try:
+            listing["city"] = city
             listing = await enrich_with_metro(listing, city)
             is_new = await save_listing(pool, listing)
 
@@ -512,12 +513,13 @@ def export_csv(listings: list[dict], filepath: str) -> None:
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
-async def _run(cmd: str, force: bool = False, source: str | None = None, skip_db: bool = False, skip_notify: bool = False) -> None:
+async def _run(cmd: str, force: bool = False, source: str | None = None, skip_db: bool = False, skip_notify: bool = False, config_path: str | None = None) -> None:
     """Load config, create pool, and run the requested stage."""
 
     # Load config
     try:
-        settings = load_config()
+        cfg_path = Path(config_path) if config_path else None
+        settings = load_config(cfg_path)
     except ConfigError as e:
         console.log(f"[bold red]Config error: {e}[/bold red]")
         return
@@ -569,13 +571,14 @@ async def _run(cmd: str, force: bool = False, source: str | None = None, skip_db
         await pool.close()
 
 
-def _parse_args() -> tuple[str, bool, str | None, bool, bool]:
-    """Parse CLI arguments. Returns (cmd, force, source, skip_db, skip_notify)."""
+def _parse_args() -> tuple[str, bool, str | None, bool, bool, str | None]:
+    """Parse CLI arguments. Returns (cmd, force, source, skip_db, skip_notify, config_path)."""
     cmd = "all"
     force = False
     source = None
     skip_db = False
     skip_notify = False
+    config_path = None
 
     args = sys.argv[1:]
     for arg in args:
@@ -587,19 +590,21 @@ def _parse_args() -> tuple[str, bool, str | None, bool, bool]:
             skip_notify = True
         elif arg.startswith("--source="):
             source = arg.split("=", 1)[1]
+        elif arg.startswith("--config="):
+            config_path = arg.split("=", 1)[1]
         elif not arg.startswith("--"):
             cmd = arg
 
-    return cmd, force, source, skip_db, skip_notify
+    return cmd, force, source, skip_db, skip_notify, config_path
 
 
 if __name__ == "__main__":
-    cmd, force, source, skip_db, skip_notify = _parse_args()
+    cmd, force, source, skip_db, skip_notify, config_path = _parse_args()
 
     console.log(f"[bold]Pipeline log:[/bold] {_log_path}")
 
     try:
-        asyncio.run(_run(cmd, force=force, source=source, skip_db=skip_db, skip_notify=skip_notify))
+        asyncio.run(_run(cmd, force=force, source=source, skip_db=skip_db, skip_notify=skip_notify, config_path=config_path))
     except Exception as e:
         console.log(f"[bold red]Pipeline failed: {e}[/bold red]")
         raise

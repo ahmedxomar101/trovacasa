@@ -1,0 +1,46 @@
+{
+  "city": "varese",
+  "tiers": {
+    "top": {
+      "score": 100,
+      "factor": 1.0,
+      "zones": [
+        "Centro",
+        "Casbeno",
+        "Sant'Ambrogio",
+        "San Fermo"
+      ]
+    },
+    "good": {
+      "score": 85,
+      "factor": 0.9,
+      "zones": [
+        "Biumo Inferiore",
+        "Biumo Superiore",
+        "Giubiano",
+        "Masnago",
+        "Brunella"
+      ]
+    },
+    "average": {
+      "score": 60,
+      "factor": 0.75,
+      "zones": [
+        "Bizzozero",
+        "Bobbiate",
+        "Calcinate",
+        "Cartabbia",
+        "Capolago",
+        "Lissago",
+        "Schiranna",
+        "Valle Olona"
+      ]
+    },
+    "caution": {
+      "score": 35,
+      "factor": 0.5,
+      "zones": []
+    }
+  },
+  "default_tier": "average"
+}

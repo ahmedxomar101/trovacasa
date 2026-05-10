@@ -1,0 +1,45 @@
+{
+  "city": "lecco",
+  "tiers": {
+    "top": {
+      "score": 100,
+      "factor": 1.0,
+      "zones": [
+        "Centro",
+        "Lungolago",
+        "Pescarenico",
+        "San Giovanni"
+      ]
+    },
+    "good": {
+      "score": 85,
+      "factor": 0.9,
+      "zones": [
+        "Castello",
+        "Maggianico",
+        "Bonacina",
+        "Germanedo",
+        "Malgrate"
+      ]
+    },
+    "average": {
+      "score": 60,
+      "factor": 0.75,
+      "zones": [
+        "Rancio",
+        "Laorca",
+        "Acquate",
+        "Belledo",
+        "Olate",
+        "Santo Stefano",
+        "Chiuso"
+      ]
+    },
+    "caution": {
+      "score": 35,
+      "factor": 0.5,
+      "zones": []
+    }
+  },
+  "default_tier": "average"
+}

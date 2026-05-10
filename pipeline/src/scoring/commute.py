@@ -8,7 +8,12 @@ from src.scoring import transit
 
 
 class CommuteScorer:
-    """Score listings by metro commute time to a destination."""
+    """Score listings by metro commute time to a destination.
+
+    Supports two modes:
+    - Intracity: routes through metro graph (Milan, Rome)
+    - Intercity: fixed_transit_minutes set, scores on walk-to-station
+    """
 
     name = "commute"
     description = "Transit commute time to workplace"
@@ -22,7 +27,6 @@ class CommuteScorer:
         if lat is None or lon is None or config.commute is None:
             return ScoreResult(score=50, details={})
 
-        dest = config.commute.destination
         city = config.city_data_path.name if config.city_data_path else "milan"
         transit_data = transit.load_city_transit(city)
         stations = transit_data["stations"]
@@ -31,7 +35,7 @@ class CommuteScorer:
             "walking_speed_m_per_min", 80
         )
 
-        # Find nearest station (no distance cap — always pick closest)
+        # Find nearest station
         best_dist = float("inf")
         best_station: dict | None = None
         for st in stations:
@@ -48,7 +52,25 @@ class CommuteScorer:
 
         walk_to_min = best_dist / walk_speed
 
-        # Find destination station (nearest to dest coords)
+        # Intercity mode: score on walk-to-station only
+        if config.commute.fixed_transit_minutes is not None:
+            score = _score_walk_to_station(walk_to_min)
+            total = round(
+                walk_to_min + config.commute.fixed_transit_minutes
+            )
+            return ScoreResult(
+                score=score,
+                details={
+                    "commute_minutes": total,
+                    "walk_to_station_min": round(walk_to_min, 1),
+                    "nearest_station": best_station["name"],
+                    "fixed_transit_minutes": config.commute.fixed_transit_minutes,
+                    "mode": "intercity",
+                },
+            )
+
+        # Intracity mode: route through metro graph
+        dest = config.commute.destination
         dest_dist = float("inf")
         dest_station: dict | None = None
         for st in stations:
@@ -66,10 +88,8 @@ class CommuteScorer:
             )
 
         walk_from_dest = dest_dist / walk_speed
-        # Default: at least 3 min walk from destination station
         walk_from_dest = max(walk_from_dest, 3.0)
 
-        # Route via metro graph
         graph = transit.build_metro_graph(transit_data)
         path = transit.shortest_path(
             graph,
@@ -102,6 +122,23 @@ class CommuteScorer:
                 "transfers": path["transfers"],
             },
         )
+
+
+def _score_walk_to_station(walk_minutes: float) -> int:
+    """Score intercity commute by walk-to-station time."""
+    if walk_minutes < 5:
+        return 100
+    if walk_minutes <= 8:
+        return 90
+    if walk_minutes <= 12:
+        return 80
+    if walk_minutes <= 15:
+        return 70
+    if walk_minutes <= 20:
+        return 55
+    if walk_minutes <= 25:
+        return 40
+    return 20
 
 
 def _score_commute_minutes(minutes: int) -> int:

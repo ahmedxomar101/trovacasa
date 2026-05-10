@@ -2,12 +2,19 @@ name: Apartment Pipeline
 
 on:
   schedule:
-    # Weekdays (Mon-Fri): 9, 14, 19 CET (= UTC+1)
-    - cron: "0 8,13,18 * * 1-5"
-    # Weekends (Sat-Sun): 11, 19 CET (= UTC+1)
-    - cron: "0 10,18 * * 0,6"
+    # Twice daily: 9 and 19 CET (= UTC+1 winter, UTC+2 summer)
+    - cron: "0 7,17 * * *"
   workflow_dispatch:
     inputs:
+      city:
+        description: "City to scrape (or all)"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - all
+          - lecco
+          - varese
       source:
         description: "Source to scrape (idealista, immobiliare, or both)"
         required: false
@@ -17,11 +24,6 @@ on:
           - ""
           - idealista
           - immobiliare
-      max_items:
-        description: "Max items per actor run"
-        required: false
-        default: "50"
-        type: string
 
 env:
   APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
@@ -30,97 +32,84 @@ env:
   TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
 jobs:
-  idealista:
-    name: Idealista pipeline
+  scrape:
+    name: "${{ matrix.city }} — ${{ matrix.source }}"
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        city: [lecco, varese]
+        source: [idealista, immobiliare]
     if: >-
       github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.source != 'immobiliare')
-    timeout-minutes: 15
-    env:
-      SOURCE: idealista
-      MAX_ITEMS: ${{ github.event.inputs.max_items || '50' }}
+      github.event_name == 'workflow_dispatch'
     steps:
+      - name: Check if this combination should run
+        env:
+          INPUT_CITY: ${{ github.event.inputs.city || 'all' }}
+          INPUT_SOURCE: ${{ github.event.inputs.source || '' }}
+          MATRIX_CITY: ${{ matrix.city }}
+          MATRIX_SOURCE: ${{ matrix.source }}
+        run: |
+          if [ "$INPUT_CITY" != "all" ] && [ "$INPUT_CITY" != "$MATRIX_CITY" ]; then
+            echo "Skipping $MATRIX_CITY (requested $INPUT_CITY only)"
+            echo "SKIP=true" >> "$GITHUB_ENV"
+          elif [ -n "$INPUT_SOURCE" ] && [ "$INPUT_SOURCE" != "$MATRIX_SOURCE" ]; then
+            echo "Skipping $MATRIX_SOURCE (requested $INPUT_SOURCE only)"
+            echo "SKIP=true" >> "$GITHUB_ENV"
+          fi
+
       - uses: actions/checkout@v4
+        if: env.SKIP != 'true'
 
       - uses: astral-sh/setup-uv@v5
+        if: env.SKIP != 'true'
         with:
           version: "latest"
 
       - uses: actions/setup-python@v5
+        if: env.SKIP != 'true'
         with:
           python-version: "3.13"
 
       - name: Install dependencies
+        if: env.SKIP != 'true'
         working-directory: pipeline
         run: uv sync
 
-      - name: Write config.yaml from secret
+      - name: Write config from secret
+        if: env.SKIP != 'true'
         env:
-          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
-        run: echo "$CONFIG_YAML" > config.yaml
+          CONFIG_LECCO: ${{ secrets.CONFIG_LECCO }}
+          CONFIG_VARESE: ${{ secrets.CONFIG_VARESE }}
+          MATRIX_CITY: ${{ matrix.city }}
+        run: |
+          case "$MATRIX_CITY" in
+            lecco)  echo "$CONFIG_LECCO" > config.yaml ;;
+            varese) echo "$CONFIG_VARESE" > config.yaml ;;
+          esac
 
-      - name: Run pipeline (idealista)
+      - name: Run pipeline
+        if: env.SKIP != 'true'
         working-directory: pipeline
-        run: uv run python -m src.main all --source="$SOURCE" --max-items="$MAX_ITEMS" --skip-notify
+        env:
+          SOURCE: ${{ matrix.source }}
+        run: uv run python -m src.main all --source="$SOURCE" --skip-notify
 
       - name: Upload logs
-        if: always()
+        if: always() && env.SKIP != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: idealista-logs-${{ github.run_id }}
-          path: pipeline/logs/
-          retention-days: 7
-
-  immobiliare:
-    name: Immobiliare pipeline
-    runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.source != 'idealista')
-    timeout-minutes: 15
-    env:
-      SOURCE: immobiliare
-      MAX_ITEMS: ${{ github.event.inputs.max_items || '50' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: astral-sh/setup-uv@v5
-        with:
-          version: "latest"
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install dependencies
-        working-directory: pipeline
-        run: uv sync
-
-      - name: Write config.yaml from secret
-        env:
-          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
-        run: echo "$CONFIG_YAML" > config.yaml
-
-      - name: Run pipeline (immobiliare)
-        working-directory: pipeline
-        run: uv run python -m src.main all --source="$SOURCE" --max-items="$MAX_ITEMS" --skip-notify
-
-      - name: Upload logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: immobiliare-logs-${{ github.run_id }}
+          name: ${{ matrix.city }}-${{ matrix.source }}-logs-${{ github.run_id }}
           path: pipeline/logs/
           retention-days: 7
 
   notify:
     name: Send notifications
     runs-on: ubuntu-latest
-    needs: [idealista, immobiliare]
-    if: >-
-      always() &&
-      (needs.idealista.result == 'success' || needs.immobiliare.result == 'success')
+    needs: [scrape]
+    if: always() && needs.scrape.result != 'failure'
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -137,10 +126,10 @@ jobs:
         working-directory: pipeline
         run: uv sync
 
-      - name: Write config.yaml from secret
+      - name: Write config from secret
         env:
-          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
-        run: echo "$CONFIG_YAML" > config.yaml
+          CONFIG_LECCO: ${{ secrets.CONFIG_LECCO }}
+        run: echo "$CONFIG_LECCO" > config.yaml
 
       - name: Send Telegram notifications
         working-directory: pipeline

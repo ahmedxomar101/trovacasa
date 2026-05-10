@@ -12,6 +12,7 @@ venv/
 
 # User config (generated from config.example.yaml)
 config.yaml
+config-*.yaml
 
 # Data & outputs (large/generated files)
 **/listings.db

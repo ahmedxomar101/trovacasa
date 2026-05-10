@@ -116,9 +116,13 @@ def _format_caption(listing: dict) -> str:
     hybrid = listing.get("hybrid_score")
     score_str = f"{int(hybrid)}/100" if hybrid is not None else ""
 
+    city = listing.get("city") or ""
+    city_label = city.capitalize() if city else ""
+
     tag_prefix = f"[{age_tag}] " if age_tag else ""
+    city_prefix = f"[{city_label}] " if city_label else ""
     lines = [
-        f"\U0001f3e0 <b>{tag_prefix}{title}</b>",
+        f"\U0001f3e0 <b>{city_prefix}{tag_prefix}{title}</b>",
         "",
         f"\U0001f4b0 {price_str}",
         f"\U0001f4ca {price_sqm:.0f}/m\u00b2" if price_sqm else "",
@@ -246,7 +250,7 @@ async def send_new_listings(
                   freshness_score, neighborhood_score,
                   condo_fees, condo_included, furnished, is_private,
                   total_monthly_cost, price_per_sqm, energy_class,
-                  creation_date, published_date
+                  creation_date, published_date, city
            FROM listings
            WHERE notified_at IS NULL
              AND status = 'active'

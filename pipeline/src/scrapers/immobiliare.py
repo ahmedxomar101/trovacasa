@@ -54,7 +54,7 @@ class ImmobiliareScraper:
             "maxItems": config.max_items,
             "maxConcurrency": 10,
             "minConcurrency": 1,
-            "maxRequestRetries": 50,
+            "maxRequestRetries": 5,
             "proxy": {
                 "useApifyProxy": True,
                 "apifyProxyGroups": ["RESIDENTIAL"],

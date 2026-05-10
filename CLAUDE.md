@@ -77,6 +77,10 @@ trovacasa/
 
 **Data flow:** Pipeline (Python, local Mac) → Supabase Postgres ← Web app (Next.js, Vercel)
 
+### Database Access
+- **Read-only queries** (inspecting data, debugging): use the Supabase MCP (`execute_sql`)
+- **Write operations** (migrations, DDL, schema changes): use the Supabase CLI (`supabase`)
+
 ## Configuration
 
 All pipeline settings are in `config.yaml` (copy from `config.example.yaml`).
@@ -100,7 +104,8 @@ All pipeline settings are in `config.yaml` (copy from `config.example.yaml`).
 ### Pipeline
 ```bash
 cd pipeline
-uv run python -m src.main validate         # validate config
+uv run python -m src.main validate         # validate config (default config.yaml)
+uv run python -m src.main scrape --config=../config-lecco.yaml   # run with named config
 uv run python -m src.main scrape           # scrape only
 uv run python -m src.main enrich           # LLM enrich only
 uv run python -m src.main enrich --force   # re-process all
@@ -132,6 +137,8 @@ npm run build    # production build
 ## Supported Cities
 - **Milan** — 125 metro stations (M1-M5), 45+ neighborhood zones
 - **Rome** — Lines A, B, B1, C, zone tiers
+- **Lecco** — Train stations (Trenord), intercity commute mode
+- **Varese** — Train stations (Trenord S5/S9), intercity commute mode
 - Add your own: see `pipeline/data/cities/README.md`
 
 ## Apify Actors

@@ -350,7 +350,7 @@ async def run_score(pool, settings=None, force: bool = True) -> None:
         console.rule("[bold magenta]Stage 3: Scoring + Report[/bold magenta]")
         console.log(f"Started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-        await score_all_listings(pool, config=settings.scoring, force=force)
+        await score_all_listings(pool, config=settings.scoring, force=force, city=settings.city)
 
         # Generate HTML report
         await generate_report(pool)

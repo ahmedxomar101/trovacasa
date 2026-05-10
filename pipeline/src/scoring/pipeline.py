@@ -107,6 +107,7 @@ async def score_all_listings(
     pool: asyncpg.Pool,
     config: ScoringConfig,
     force: bool = False,
+    city: str | None = None,
 ):
     """Compute all scores for every listing in the database.
 
@@ -114,6 +115,7 @@ async def score_all_listings(
         pool: asyncpg connection pool.
         config: Scoring configuration.
         force: If True, re-score all listings even if scored.
+        city: If set, only score listings for this city.
     """
     _SCORING_COLS = (
         "id, price, rooms, size_sqm, address, floor, "
@@ -129,14 +131,22 @@ async def score_all_listings(
         "neighborhood_score, hybrid_score, "
         "total_monthly_cost, budget_status, commute_minutes"
     )
+    city_filter = ""
+    params: list = []
+    if city:
+        city_filter = " AND city = $1" if not force else " WHERE city = $1"
+        params = [city]
+
     if force:
         rows = await pool.fetch(
-            f"SELECT {_SCORING_COLS} FROM listings"
+            f"SELECT {_SCORING_COLS} FROM listings{city_filter}",
+            *params,
         )
     else:
+        where = f"WHERE hybrid_score IS NULL{' AND city = $1' if city else ''}"
         rows = await pool.fetch(
-            f"SELECT {_SCORING_COLS} FROM listings "
-            "WHERE hybrid_score IS NULL"
+            f"SELECT {_SCORING_COLS} FROM listings {where}",
+            *params,
         )
 
     total = len(rows)

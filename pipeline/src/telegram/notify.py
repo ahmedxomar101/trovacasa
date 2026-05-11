@@ -15,13 +15,12 @@ console = Console()
 # Telegram API base
 _API = "https://api.telegram.org/bot{token}/{method}"
 
-# Notification thresholds
+# Notification thresholds (defaults, overridden by config)
 NOTIFY_MAX_PRICE = 1100
 NOTIFY_MAX_PER_RUN = 20
 
-# Sliding score threshold by listing age
-# Newer listings get in easier, older need higher scores
-NOTIFY_AGE_TIERS = [
+# Default sliding score threshold by listing age
+_DEFAULT_AGE_TIERS = [
     (6, 65),    # < 6 hours old → score >= 65
     (24, 70),   # 6-24 hours old → score >= 70
     (48, 80),   # 24-48 hours old → score >= 80
@@ -196,14 +195,15 @@ async def _send_to_chat(
         return False
 
 
-def _get_min_score_for_age(hours: float) -> int | None:
+def _get_min_score_for_age(hours: float, age_tiers: list[tuple[int, int]] | None = None) -> int | None:
     """Return the minimum score threshold for a listing's age.
 
     Returns None if the listing is too old to notify.
     """
+    tiers = age_tiers or _DEFAULT_AGE_TIERS
     if hours > NOTIFY_MAX_AGE_HOURS:
         return None
-    for max_hours, min_score in NOTIFY_AGE_TIERS:
+    for max_hours, min_score in tiers:
         if hours <= max_hours:
             return min_score
     return None
@@ -213,6 +213,7 @@ async def send_new_listings(
     pool: asyncpg.Pool,
     max_price: int = NOTIFY_MAX_PRICE,
     max_per_run: int = NOTIFY_MAX_PER_RUN,
+    age_tiers: list[tuple[int, int]] | None = None,
 ) -> dict:
     """Send Telegram notifications for new high-score listings to all subscribers.
 
@@ -239,7 +240,8 @@ async def send_new_listings(
     console.print(f"[bold]Active subscribers: {len(subscribers)}[/]")
 
     # Get the lowest possible score threshold (for the broadest initial query)
-    lowest_score = min(score for _, score in NOTIFY_AGE_TIERS)
+    tiers = age_tiers or _DEFAULT_AGE_TIERS
+    lowest_score = min(score for _, score in tiers)
 
     # Get candidate listings: unnotified, active, within max age, above lowest threshold
     rows = await pool.fetch(
@@ -277,7 +279,7 @@ async def send_new_listings(
         except (ValueError, TypeError):
             continue
 
-        min_score = _get_min_score_for_age(hours)
+        min_score = _get_min_score_for_age(hours, tiers)
         if min_score is None:
             continue
         if listing["hybrid_score"] >= min_score:

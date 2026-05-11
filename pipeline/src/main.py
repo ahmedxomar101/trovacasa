@@ -376,11 +376,19 @@ async def run_score(pool, settings=None, force: bool = True) -> None:
 
 # ── Full pipeline ────────────────────────────────────────────────────────────
 
-async def run_notify(pool) -> None:
+async def run_notify(pool, settings=None) -> None:
     """Send Telegram notifications for new high-score listings."""
     console.rule("[bold magenta]Stage 4: Telegram Notifications[/bold magenta]")
     console.log(f"Started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    await send_new_listings(pool)
+
+    age_tiers = None
+    max_price = 1100
+    if settings:
+        t = settings.telegram.score_thresholds
+        age_tiers = [(6, t.fresh_6h), (24, t.day_old), (48, t.two_day)]
+        max_price = settings.budget.max_rent
+
+    await send_new_listings(pool, max_price=max_price, age_tiers=age_tiers)
 
 
 async def run_bot(pool) -> None:
@@ -421,7 +429,7 @@ async def run_all(pool, settings, source: str | None = None, skip_notify: bool =
         await run_gallery(pool)
     # Notify only if Telegram is configured (and not skipped)
     if not skip_notify and settings.telegram.enabled and os.environ.get("TELEGRAM_BOT_TOKEN"):
-        await run_notify(pool)
+        await run_notify(pool, settings=settings)
 
 
 async def run_validate(settings) -> bool:
@@ -560,7 +568,7 @@ async def _run(cmd: str, force: bool = False, source: str | None = None, skip_db
         elif cmd == "score":
             await run_score(pool, settings=settings, force=force)
         elif cmd == "notify":
-            await run_notify(pool)
+            await run_notify(pool, settings=settings)
         elif cmd == "gallery":
             await run_gallery(pool)
         elif cmd == "bot":
